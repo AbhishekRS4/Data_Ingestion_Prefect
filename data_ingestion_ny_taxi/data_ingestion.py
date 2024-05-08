@@ -14,6 +14,18 @@ df_year = None
 
 @task(log_prints=True)
 def create_dir(dir_dataset: str) -> None:
+    """
+    ---------
+    Arguments
+    ---------
+    dir_dataset: str
+        full path of the dataset directory path
+
+    -------
+    Returns
+    -------
+    None
+    """
     if not os.path.isdir(dir_dataset):
         os.makedirs(dir_dataset)
         logging.info(f"created dataset directory: {dir_dataset}")
@@ -22,6 +34,18 @@ def create_dir(dir_dataset: str) -> None:
 
 @task(retries=3, retry_delay_seconds=2, log_prints=True)
 def download(config_downloader: DataDownloaderConfig) -> None:
+    """
+    ---------
+    Arguments
+    ---------
+    config_downloader: DataDownloaderConfig
+        object of class DataDownloaderConfig
+
+    -------
+    Returns
+    -------
+    None
+    """
     file_name = f"{config_downloader.taxi_type}_tripdata_{config_downloader.year}-{config_downloader.month:02d}.parquet"
     file_url = f"{config_downloader.file_base_url}/{file_name}"
 
@@ -38,6 +62,19 @@ def download(config_downloader: DataDownloaderConfig) -> None:
 
 @task(log_prints=True)
 def load_df_month(config_downloader: DataDownloaderConfig) -> pd.DataFrame:
+    """
+    ---------
+    Arguments
+    ---------
+    config_downloader: DataDownloaderConfig
+        object of class DataDownloaderConfig
+
+    -------
+    Returns
+    -------
+    df_month: pd.DataFrame
+        a dataframe with the monthly data
+    """
     file_parq = f"{config_downloader.taxi_type}_tripdata_{config_downloader.year}-{config_downloader.month:02d}.parquet"
     df_month = pd.read_parquet(os.path.join(config_downloader.dir_dataset, file_parq))
     logging.info(f"loaded dataframe from file: {file_parq}")
@@ -48,6 +85,20 @@ def load_df_month(config_downloader: DataDownloaderConfig) -> pd.DataFrame:
 def merge_save_large_df(
     config_downloader: DataDownloaderConfig, df_month: pd.DataFrame
 ) -> None:
+    """
+    ---------
+    Arguments
+    ---------
+    config_downloader: DataDownloaderConfig
+        object of class DataDownloaderConfig
+    df_month: pd.DataFrame
+        a dataframe with the monthly data
+
+    -------
+    Returns
+    -------
+    None
+    """
     df_large = None
     if os.path.isfile(
         os.path.join(config_downloader.dir_dataset, config_downloader.file_large)
