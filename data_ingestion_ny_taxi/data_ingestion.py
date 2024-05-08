@@ -9,8 +9,6 @@ from prefect import task, flow
 
 from config import DataDownloaderConfig
 
-df_year = None
-
 
 @task(log_prints=True)
 def create_dir(dir_dataset: str) -> None:
@@ -96,17 +94,17 @@ def merge_save_large_df(
     -------
     None
     """
-    df_large = None
+    df_year = None
     if os.path.isfile(
         os.path.join(config_downloader.dir_dataset, config_downloader.file_large)
     ):
-        df_large = pd.read_parquet(
+        df_year = pd.read_parquet(
             os.path.join(config_downloader.dir_dataset, config_downloader.file_large)
         )
-        df_large = pd.concat([df_large, df_month], sort=False)
+        df_year = pd.concat([df_year, df_month], sort=False)
     else:
-        df_large = df_month
-    df_large.to_parquet(
+        df_year = df_month
+    df_year.to_parquet(
         os.path.join(config_downloader.dir_dataset, config_downloader.file_large),
         index=False,
     )
