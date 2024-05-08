@@ -11,21 +11,17 @@ from config import DataDownloaderConfig
 
 df_year = None
 
-@task()
+
+@task(log_prints=True)
 def create_dir(dir_dataset: str) -> None:
     if not os.path.isdir(dir_dataset):
         os.makedirs(dir_dataset)
         logging.info(f"created dataset directory: {dir_dataset}")
     return
 
-@task(retries=3, retry_delay_seconds=2)
+
+@task(retries=3, retry_delay_seconds=2, log_prints=True)
 def download(config_downloader: DataDownloaderConfig) -> None:
-    logging.info(f"NY Taxi dataset downloader config:{config_downloader}")
-
-    if not os.path.isdir(config_downloader.dir_dataset):
-        logging.info(f"created dataset directory: {config_downloader.dir_dataset}")
-        os.makedirs(config_downloader.dir_dataset)
-
     file_name = f"{config_downloader.taxi_type}_tripdata_{config_downloader.year}-{config_downloader.month:02d}.parquet"
     file_url = f"{config_downloader.file_base_url}/{file_name}"
 
@@ -39,24 +35,38 @@ def download(config_downloader: DataDownloaderConfig) -> None:
 
     return
 
-@task()
+
+@task(log_prints=True)
 def load_df_month(config_downloader: DataDownloaderConfig) -> pd.DataFrame:
     file_parq = f"{config_downloader.taxi_type}_tripdata_{config_downloader.year}-{config_downloader.month:02d}.parquet"
     df_month = pd.read_parquet(os.path.join(config_downloader.dir_dataset, file_parq))
+    logging.info(f"loaded dataframe from file: {file_parq}")
     return df_month
 
-@task()
-def merge_save_large_df(config_downloader: DataDownloaderConfig, df_month: pd.DataFrame) -> None:
+
+@task(log_prints=True)
+def merge_save_large_df(
+    config_downloader: DataDownloaderConfig, df_month: pd.DataFrame
+) -> None:
     df_large = None
-    if os.path.isfile(os.path.join(config_downloader.dir_dataset, config_downloader.file_large)):
-        df_large = pd.read_parquet(os.path.join(config_downloader.dir_dataset, config_downloader.file_large))
+    if os.path.isfile(
+        os.path.join(config_downloader.dir_dataset, config_downloader.file_large)
+    ):
+        df_large = pd.read_parquet(
+            os.path.join(config_downloader.dir_dataset, config_downloader.file_large)
+        )
         df_large = pd.concat([df_large, df_month], sort=False)
     else:
         df_large = df_month
-    df_large.to_parquet(os.path.join(config_downloader.dir_dataset, config_downloader.file_large), index=False)
+    df_large.to_parquet(
+        os.path.join(config_downloader.dir_dataset, config_downloader.file_large),
+        index=False,
+    )
+    logging.info(f"saved combined dataframe to: {config_downloader.file_large}")
     return
 
-@flow
+
+@flow(log_prints=True)
 def data_ingestion_flow() -> None:
     month = 1
     parser = argparse.ArgumentParser(
@@ -70,8 +80,12 @@ def data_ingestion_flow() -> None:
     )
     ARGS, unparsed = parser.parse_known_args()
 
+    logging.basicConfig(level=logging.INFO)
     config_downloader = DataDownloaderConfig(month=ARGS.month)
-    config_downloader.file_large = f"{config_downloader.taxi_type}_{config_downloader.year}.parquet"
+    config_downloader.file_large = (
+        f"{config_downloader.taxi_type}_{config_downloader.year}.parquet"
+    )
+    logging.info(f"NY Taxi dataset downloader config:{config_downloader}")
 
     # create dataset directory
     create_dir(config_downloader.dir_dataset)
@@ -86,6 +100,7 @@ def data_ingestion_flow() -> None:
     merge_save_large_df(config_downloader, df_month)
 
     return
+
 
 if __name__ == "__main__":
     data_ingestion_flow()
