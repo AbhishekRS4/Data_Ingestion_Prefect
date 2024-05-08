@@ -49,13 +49,10 @@ def download(config_downloader: DataDownloaderConfig) -> None:
     file_name = f"{config_downloader.taxi_type}_tripdata_{config_downloader.year}-{config_downloader.month:02d}.parquet"
     file_url = f"{config_downloader.file_base_url}/{file_name}"
 
-    try:
-        urllib.request.urlretrieve(
-            file_url, os.path.join(config_downloader.dir_dataset, file_name)
-        )
-        logging.info(f"downloaded file: {file_url}")
-    except:
-        logging.info(f"file url not found: {file_url}")
+    urllib.request.urlretrieve(
+        file_url, os.path.join(config_downloader.dir_dataset, file_name)
+    )
+    logging.info(f"downloaded file: {file_url}")
 
     return
 
@@ -120,6 +117,7 @@ def merge_save_large_df(
 @flow(log_prints=True)
 def data_ingestion_flow() -> None:
     month = 1
+    year = 2021
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
@@ -129,10 +127,16 @@ def data_ingestion_flow() -> None:
         type=int,
         help="month of the dataset to be downloaded",
     )
+    parser.add_argument(
+        "--year",
+        default=year,
+        type=int,
+        help="year of the dataset to be downloaded",
+    )
     ARGS, unparsed = parser.parse_known_args()
 
     logging.basicConfig(level=logging.INFO)
-    config_downloader = DataDownloaderConfig(month=ARGS.month)
+    config_downloader = DataDownloaderConfig(month=ARGS.month, year=ARGS.year)
     config_downloader.file_large = (
         f"{config_downloader.taxi_type}_{config_downloader.year}.parquet"
     )
