@@ -15,4 +15,5 @@ prefect server start
 
 
 ## Instructions
-* Run the script just like any normal python script
+* The setup, usage and deployment instructions are documented in the [blog post on Prefect](https://abhishekrs4.github.io/blogs/tech_blogs/tech_blog_3.html)
+* Either run the script just like any normal python script or use prefect workpools and deployments to schedule runs which is recommended
